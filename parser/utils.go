@@ -407,11 +407,7 @@ func (l *Lexer) unreadRune() {
 		l.pos.Line--
 		l.pos.Column = 0 // Note: This isn't accurate for previous line length
 	}
-	if err := l.reader.UnreadRune(); err != nil {
-		// Handle the error or log it
-		// Since this is an internal utility function, we'll just ignore the error
-		// as it's unlikely to happen in normal operation
-	}
+	l.reader.UnreadRune()
 }
 
 func (l *Lexer) skipLineComment() {
