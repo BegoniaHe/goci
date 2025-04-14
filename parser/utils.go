@@ -270,27 +270,33 @@ func (l *Lexer) readString(first rune) (Position, TokenType, string) {
 			}
 			lit = append(lit, nextRune)
 
-			// Handle special escape sequences
-			switch nextRune {
-			case 'x':
-				// Hex escape sequence \xHH
-				if !l.readNHexDigits(&lit, 2) {
-					return startPos, ILLEGAL, string(lit)
+			// Use the escapeSequences map for common escape sequences
+			if _, exists := escapeSequences[nextRune]; exists {
+				// The escape sequence is recognized and handled implicitly by the Go string syntax
+				// We just keep the literal representation (\n, \t, etc.)
+			} else {
+				// Handle other special escape sequences
+				switch nextRune {
+				case 'x':
+					// Hex escape sequence \xHH
+					if !l.readNHexDigits(&lit, 2) {
+						return startPos, ILLEGAL, string(lit)
+					}
+				case '0', '1', '2', '3', '4', '5', '6', '7':
+					// Octal escape \OOO
+					l.readOctalDigits(&lit, 2)
+				case '\r':
+					// Handle \r\n
+					nextRune, err := l.readNextRune()
+					if err == nil && nextRune == '\n' {
+						lit = append(lit, nextRune)
+					} else if err == nil {
+						l.unreadRune()
+					}
+				case '\n':
+					// Line continuation
+					lit = lit[:len(lit)-1] // Remove the newline
 				}
-			case '0', '1', '2', '3', '4', '5', '6', '7':
-				// Octal escape \OOO
-				l.readOctalDigits(&lit, 2)
-			case '\r':
-				// Handle \r\n
-				nextRune, err := l.readNextRune()
-				if err == nil && nextRune == '\n' {
-					lit = append(lit, nextRune)
-				} else if err == nil {
-					l.unreadRune()
-				}
-			case '\n':
-				// Line continuation
-				lit = lit[:len(lit)-1] // Remove the newline
 			}
 		}
 	}
@@ -351,14 +357,19 @@ func (l *Lexer) readChar() (Position, TokenType, string) {
 		}
 		lit = append(lit, escaped)
 
-		// Handle special escape cases
-		switch escaped {
-		case 'x':
-			if !l.readNHexDigits(&lit, 2) {
-				return startPos, ILLEGAL, string(lit)
+		// Use the escapeSequences map for common escape sequences
+		if _, exists := escapeSequences[escaped]; exists {
+			// The escape sequence is recognized and handled implicitly
+		} else {
+			// Handle special escape cases
+			switch escaped {
+			case 'x':
+				if !l.readNHexDigits(&lit, 2) {
+					return startPos, ILLEGAL, string(lit)
+				}
+			case '0', '1', '2', '3', '4', '5', '6', '7':
+				l.readOctalDigits(&lit, 2)
 			}
-		case '0', '1', '2', '3', '4', '5', '6', '7':
-			l.readOctalDigits(&lit, 2)
 		}
 	}
 
@@ -396,7 +407,11 @@ func (l *Lexer) unreadRune() {
 		l.pos.Line--
 		l.pos.Column = 0 // Note: This isn't accurate for previous line length
 	}
-	l.reader.UnreadRune()
+	if err := l.reader.UnreadRune(); err != nil {
+		// Handle the error or log it
+		// Since this is an internal utility function, we'll just ignore the error
+		// as it's unlikely to happen in normal operation
+	}
 }
 
 func (l *Lexer) skipLineComment() {
