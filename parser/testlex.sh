@@ -1,1 +1,3 @@
-go test . -bench -run -benchmem -benchtime=1s -count=5
+#!/bin/bash
+# Run tests and benchmarks
+go test -v -benchmem -bench=. -count=5

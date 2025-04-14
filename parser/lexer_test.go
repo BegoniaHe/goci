@@ -420,3 +420,78 @@ func TestPositionTracking(t *testing.T) {
 		}
 	}
 }
+
+// BenchmarkLexer benchmarks the performance of the lexer with various input types
+func BenchmarkLexer(b *testing.B) {
+	benchmarks := []struct {
+		name  string
+		input string
+	}{
+		{"EmptyString", ""},
+		{"SimpleExpression", "a = 1 + 2;"},
+		{"ComplexExpression", "int main() { printf(\"Hello, world!\"); return 0; }"},
+		{"MixedTokens", "if (x > 10 && y < 20) { z = x + y * 2; return true; }"},
+	}
+
+	for _, bm := range benchmarks {
+		b.Run(bm.name, func(b *testing.B) {
+			for i := 0; i < b.N; i++ {
+				lexer := NewLexer(strings.NewReader(bm.input))
+				for {
+					_, tok, _ := lexer.Lex()
+					if tok == EOF {
+						break
+					}
+				}
+			}
+		})
+	}
+}
+
+// BenchmarkComplexCode benchmarks lexing a more complex code snippet
+func BenchmarkComplexCode(b *testing.B) {
+	input := `
+struct Point {
+    int x;
+    int y;
+};
+
+typedef enum {
+    RED,
+    GREEN,
+    BLUE
+} Color;
+
+#define MAX(a, b) ((a) > (b) ? (a) : (b))
+
+int calculate(int a, int b) {
+    int result = 0;
+    
+    // Calculate sum
+    result = a + b;
+    
+    /* Calculate 
+       product */
+    result *= (a * b);
+    
+    return result >> 2;
+}
+
+void main() {
+    int arr[10] = {0};
+    for(int i = 0; i < 10; i++) {
+        arr[i] = i * 2;
+    }
+}
+`
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		lexer := NewLexer(strings.NewReader(input))
+		for {
+			_, tok, _ := lexer.Lex()
+			if tok == EOF {
+				break
+			}
+		}
+	}
+}

@@ -49,6 +49,11 @@ jobs:
           while IFS= read -r script; do
             if [[ ! "$script" =~ ^#.* && -n "$script" ]]; then
               echo "Running script: $script"
-              $script
+              # Extract the directory from the script path and cd into it before running
+              script_dir=$(dirname "$script")
+              script_name=$(basename "$script")
+              pushd "$script_dir" > /dev/null
+              ./"$script_name"
+              popd > /dev/null
             fi
-          done < <(cat scripts.yml | tr -d ' ')
+          done < <(cat scripts.yml | grep -v '^#' | tr -d ' ')
