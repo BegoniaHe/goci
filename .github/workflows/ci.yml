@@ -1,0 +1,53 @@
+name: CI
+
+on:
+  pull_request:
+    branches: [ main, master ]
+  push:
+    branches: [ main, master ]
+
+jobs:
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: '1.20'
+          cache: true
+
+      - name: Run golangci-lint
+        uses: golangci/golangci-lint-action@v3
+        with:
+          version: latest
+
+  test-scripts:
+    name: Run Test Scripts
+    runs-on: ubuntu-latest
+    needs: lint
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: '1.20'
+          cache: true
+
+      - name: Make scripts executable
+        run: |
+          chmod +x $(cat scripts.yml | grep -v '^#' | tr -d ' ')
+
+      - name: Run scripts
+        run: |
+          while IFS= read -r script; do
+            if [[ ! "$script" =~ ^#.* && -n "$script" ]]; then
+              echo "Running script: $script"
+              $script
+            fi
+          done < <(cat scripts.yml | tr -d ' ')

@@ -1,0 +1,6 @@
+# List of scripts to run as part of CI workflow
+# Each line contains a relative path to a script
+./parser/testlex.sh
+# Add more script paths below as needed
+# ./another/script/path.sh
+# ./yet/another/script.sh
