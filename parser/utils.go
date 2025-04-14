@@ -405,9 +405,9 @@ func (l *Lexer) unreadRune() {
 		l.pos.Column--
 	} else if l.pos.Line > 0 {
 		l.pos.Line--
-		l.pos.Column = 0 // Note: This isn't accurate for previous line length
+		l.pos.Column = 0
 	}
-	l.reader.UnreadRune()
+	_ = l.reader.UnreadRune()
 }
 
 func (l *Lexer) skipLineComment() {
