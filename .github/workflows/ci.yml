@@ -24,6 +24,7 @@ jobs:
         uses: golangci/golangci-lint-action@v3
         with:
           version: latest
+          args: --out-format=colored-line-number
 
   test-scripts:
     name: Run Test Scripts
