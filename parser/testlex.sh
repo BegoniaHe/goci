@@ -1,0 +1,1 @@
+go test . -bench -run -benchmem -benchtime=1s -count=5
